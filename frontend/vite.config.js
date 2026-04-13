@@ -20,22 +20,27 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
     minify: 'terser',
-    chunkSizeWarningLimit: 1000, // Increase limit to 1MB (optional)
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Core React vendor
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          // UI libraries
-          'vendor-ui': ['react-markdown', 'react-syntax-highlighter', 'react-icons'],
-          // Syntax highlighter languages (if you use many languages, they can be split further)
-          'vendor-syntax': ['react-syntax-highlighter/dist/esm/languages/prism'],
-          // Supabase client
-          'vendor-supabase': ['@supabase/supabase-js'],
-          // Other large dependencies (if any)
-          'vendor-other': ['axios', 'date-fns', 'react-hook-form']
+        manualChunks(id) {
+          // Function-based manual chunking
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+              return 'vendor-react';
+            }
+            if (id.includes('react-markdown') || id.includes('react-syntax-highlighter') || id.includes('react-icons')) {
+              return 'vendor-ui';
+            }
+            if (id.includes('@supabase/supabase-js')) {
+              return 'vendor-supabase';
+            }
+            if (id.includes('axios') || id.includes('date-fns') || id.includes('react-hook-form')) {
+              return 'vendor-other';
+            }
+            return 'vendor';
+          }
         },
-        // Ensure proper chunk naming
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]'
