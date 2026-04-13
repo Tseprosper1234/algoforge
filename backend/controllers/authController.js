@@ -1,6 +1,6 @@
 // controllers/authController.js
 const pool = require('../db/pool');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { sendPasswordResetEmail, sendVerificationEmail } = require('../services/emailService');

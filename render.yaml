@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: algoforge-api
+    rootDir: backend
+    buildCommand: npm install --legacy-peer-deps
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: DB_HOST
+        value: aws-0-eu-west-1.pooler.supabase.com
+      - key: DB_USER
+        value: postgres.hbycpnqtstgesekhizsa
+      - key: DB_PASSWORD
+        value: a1,b2.c3*d4?
+      - key: DB_NAME
+        value: postgres
+      - key: SUPABASE_URL
+        value: https://hbycpnqtstgesekhizsa.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhieWNwbnF0c3RnZXNla2hpenNhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjA4MTAyMiwiZXhwIjoyMDkxNjU3MDIyfQ.f6xT9hO7wJlPosHFHpScTheX9EaJAphkKTBiyDGQIq0
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USER
+        value: enginexus1@gmail.com
+      - key: SMTP_PASS
+        value: gbbn muhf rfjq zehf
