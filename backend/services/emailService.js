@@ -1,4 +1,4 @@
-// services/emailService.js
+/*// services/emailService.js
 const nodemailer = require('nodemailer');
 
 // Test SMTP connection on startup
@@ -92,4 +92,143 @@ module.exports = {
   notifyNewContent, 
   sendVerificationEmail,
   sendEmail 
+};*/
+
+
+
+
+// services/emailService.js
+const { Resend } = require('resend');
+
+// Initialize Resend
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Sender email - use your verified domain or resend.dev for testing
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+
+async function sendVerificationEmail(to, code) {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: `AlgoForge <${FROM_EMAIL}>`,
+      to: [to],
+      subject: 'Verify Your Email - AlgoForge',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+            .code { font-size: 32px; font-weight: bold; color: #3b82f6; letter-spacing: 5px; margin: 20px 0; }
+            .footer { font-size: 12px; color: #999; margin-top: 30px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h2>Welcome to AlgoForge! 🧠</h2>
+            <p>Thank you for registering. Please verify your email address using the code below:</p>
+            <div class="code">${code}</div>
+            <p>This code will expire in <strong>15 minutes</strong>.</p>
+            <p>If you didn't create an account, please ignore this email.</p>
+            <div class="footer">
+              <p>AlgoForge - Learn Algorithms, Data Structures & Complexity</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+    
+    if (error) {
+      console.error('Resend error:', error);
+      throw error;
+    }
+    
+    console.log(`Verification email sent to ${to}, id: ${data.id}`);
+    return { success: true, id: data.id };
+  } catch (error) {
+    console.error('Email send error:', error);
+    return { error: error.message };
+  }
+}
+
+async function sendPasswordResetEmail(to, resetLink) {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: `AlgoForge <${FROM_EMAIL}>`,
+      to: [to],
+      subject: 'Reset Your Password - AlgoForge',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; }
+            .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+            .button { display: inline-block; padding: 12px 24px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; margin: 20px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h2>Password Reset Request</h2>
+            <p>Click the button below to reset your password. This link is valid for 1 hour.</p>
+            <a href="${resetLink}" class="button">Reset Password</a>
+            <p>If you didn't request this, please ignore this email.</p>
+            <p>Or copy this link: ${resetLink}</p>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+    
+    console.log(`Password reset email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    console.error('Email send error:', error);
+    return { error: error.message };
+  }
+}
+
+async function notifyNewContent(to, fileName, fileId) {
+  try {
+    const frontendUrl = process.env.FRONTEND_URL || 'https://algoforge.onrender.com';
+    const { data, error } = await resend.emails.send({
+      from: `AlgoForge <${FROM_EMAIL}>`,
+      to: [to],
+      subject: 'New Content Available - AlgoForge',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; }
+            .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+            .button { display: inline-block; padding: 12px 24px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; margin: 20px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h2>📚 New Learning Content!</h2>
+            <p>A new topic has been added to AlgoForge:</p>
+            <h3>"${fileName}"</h3>
+            <a href="${frontendUrl}/files/${fileId}" class="button">View Now</a>
+            <p>Keep learning and growing your skills!</p>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+    
+    console.log(`New content notification sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    console.error('Email send error:', error);
+    return { error: error.message };
+  }
+}
+
+module.exports = { 
+  sendVerificationEmail, 
+  sendPasswordResetEmail, 
+  notifyNewContent 
 };
