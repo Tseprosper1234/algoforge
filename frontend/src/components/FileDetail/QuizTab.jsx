@@ -33,28 +33,34 @@ const QuizTab = ({ quiz, fileId }) => {
   };
   
   const handleSubmit = async () => {
-    // Check if all questions answered
-    if (answers.some(a => a === null)) {
-      alert('Please answer all questions before submitting.');
-      return;
-    }
+  // Check if all questions answered
+  if (answers.some(a => a === null)) {
+    alert('Please answer all questions before submitting.');
+    return;
+  }
+  
+  setLoading(true);
+  try {
+    const formattedAnswers = questions.map((q, idx) => ({
+      question_id: q.id,
+      selected_option: answers[idx]
+    }));
     
-    setLoading(true);
-    try {
-      const formattedAnswers = questions.map((q, idx) => ({
-        question_id: q.id,
-        selected_option: answers[idx]
-      }));
-      const response = await submitQuiz(fileId, formattedAnswers);
-      setResult(response);
-      setSubmitted(true);
-    } catch (error) {
-      console.error('Failed to submit quiz', error);
-      alert('Failed to submit quiz. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    console.log('Submitting answers:', formattedAnswers);
+    
+    const response = await submitQuiz(fileId, formattedAnswers);
+    console.log('Quiz response:', response);
+    
+    setResult(response);
+    setSubmitted(true);
+  } catch (error) {
+    console.error('Failed to submit quiz', error);
+    const errorMsg = error.response?.data?.error || error.message || 'Failed to submit quiz';
+    alert(`Error: ${errorMsg}`);
+  } finally {
+    setLoading(false);
+  }
+};
   
   if (questions.length === 0) {
     return <div>No questions available for this quiz.</div>;

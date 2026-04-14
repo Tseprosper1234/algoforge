@@ -17,7 +17,6 @@ exports.getFilesHierarchy = async (req, res) => {
       LEFT JOIN files f ON s.id = f.subtype_id
       ORDER BY c.id, t.order_index, s.id, f.id
     `);
-    // Build nested structure on frontend, but we can send flat and let frontend group
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -30,59 +29,103 @@ exports.getFileById = async (req, res) => {
   const { id } = req.params;
   try {
     const fileResult = await pool.query('SELECT * FROM files WHERE id = $1', [id]);
-    if (fileResult.rows.length === 0) return res.status(404).json({ error: 'File not found' });
+    if (fileResult.rows.length === 0) {
+      return res.status(404).json({ error: 'File not found' });
+    }
     const file = fileResult.rows[0];
 
-    const codesResult = await pool.query('SELECT * FROM example_codes WHERE file_id = $1 ORDER BY language, order_index', [id]);
+    const codesResult = await pool.query(
+      'SELECT * FROM example_codes WHERE file_id = $1 ORDER BY language, order_index',
+      [id]
+    );
+    
     const quizResult = await pool.query('SELECT id, title FROM quizzes WHERE file_id = $1', [id]);
     let questions = [];
     if (quizResult.rows.length > 0) {
       const quizId = quizResult.rows[0].id;
-      const questionsResult = await pool.query('SELECT id, question_text, option_a, option_b, option_c, option_d FROM quiz_questions WHERE quiz_id = $1 ORDER BY order_index', [quizId]);
+      const questionsResult = await pool.query(
+        'SELECT id, question_text, option_a, option_b, option_c, option_d FROM quiz_questions WHERE quiz_id = $1 ORDER BY order_index',
+        [quizId]
+      );
       questions = questionsResult.rows;
     }
+    
     res.json({
       file,
       example_codes: codesResult.rows,
       quiz: quizResult.rows[0] ? { ...quizResult.rows[0], questions } : null
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Get file by ID error:', err);
+    res.status(500).json({ error: 'Server error: ' + err.message });
   }
 };
 
 // Submit quiz answers
 exports.submitQuiz = async (req, res) => {
   const { id } = req.params; // file id
-  const { answers } = req.body; // array of { question_id, selected_option }
+  const { answers } = req.body;
   const userId = req.user.id;
+  
+  console.log('Quiz submission received:', { fileId: id, userId, answersCount: answers?.length });
+  
+  if (!answers || !Array.isArray(answers)) {
+    return res.status(400).json({ error: 'Answers array is required' });
+  }
+  
   try {
     // Get quiz id for this file
     const quizRes = await pool.query('SELECT id FROM quizzes WHERE file_id = $1', [id]);
-    if (quizRes.rows.length === 0) return res.status(404).json({ error: 'No quiz for this file' });
+    if (quizRes.rows.length === 0) {
+      return res.status(404).json({ error: 'No quiz for this file' });
+    }
     const quizId = quizRes.rows[0].id;
-
+    
     // Get all questions with correct answers
-    const questionsRes = await pool.query('SELECT id, correct_option FROM quiz_questions WHERE quiz_id = $1 ORDER BY order_index', [quizId]);
+    const questionsRes = await pool.query(
+      'SELECT id, correct_option FROM quiz_questions WHERE quiz_id = $1 ORDER BY order_index',
+      [quizId]
+    );
     const questions = questionsRes.rows;
-    if (questions.length === 0) return res.status(400).json({ error: 'Quiz has no questions' });
-
+    
+    if (questions.length === 0) {
+      return res.status(400).json({ error: 'Quiz has no questions' });
+    }
+    
     // Map user answers
     const userAnswersMap = {};
     for (const ans of answers) {
       userAnswersMap[ans.question_id] = ans.selected_option;
     }
-    const userAnswersOrdered = questions.map(q => userAnswersMap[q.id] || null);
-    const score = await calculateScore(questions, userAnswersOrdered);
+    
+    // Calculate score
+    let correctCount = 0;
+    for (const q of questions) {
+      const userAnswer = userAnswersMap[q.id];
+      if (userAnswer && userAnswer.toUpperCase() === q.correct_option) {
+        correctCount++;
+      }
+    }
+    
+    const score = Math.round((correctCount / questions.length) * 100);
+    
     // Store attempt
     await pool.query(
-      'INSERT INTO user_quiz_attempts (user_id, quiz_id, score, answers) VALUES ($1, $2, $3, $4) ON CONFLICT (user_id, quiz_id) DO UPDATE SET score = $3, answers = $4, completed_at = CURRENT_TIMESTAMP',
+      `INSERT INTO user_quiz_attempts (user_id, quiz_id, score, answers) 
+       VALUES ($1, $2, $3, $4) 
+       ON CONFLICT (user_id, quiz_id) 
+       DO UPDATE SET score = $3, answers = $4, completed_at = CURRENT_TIMESTAMP`,
       [userId, quizId, score, JSON.stringify(answers)]
     );
-    res.json({ score, message: `You scored ${score}%` });
+    
+    res.json({ 
+      score, 
+      message: `You scored ${score}% (${correctCount}/${questions.length} correct)`,
+      correctCount,
+      totalQuestions: questions.length
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Quiz submission error:', err);
+    res.status(500).json({ error: 'Server error: ' + err.message });
   }
 };

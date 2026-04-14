@@ -2,12 +2,13 @@
 const pool = require('../db/pool');
 const { uploadFile } = require('../services/supabaseStorage');
 
-// Get messages (with pagination, latest first, including replies)
+// Get messages (with pagination and threaded replies)
 exports.getMessages = async (req, res) => {
   const limit = parseInt(req.query.limit) || 50;
   const offset = parseInt(req.query.offset) || 0;
+  
   try {
-    // Get all messages without complex sorting first
+    // Get all messages ordered by creation date
     const result = await pool.query(`
       SELECT 
         cm.*, 
@@ -45,23 +46,19 @@ exports.getMessages = async (req, res) => {
       return msg;
     }));
     
-    // Build a threaded message structure
+    // Build threaded message structure
     const messageMap = new Map();
     const rootMessages = [];
     
-    // First pass: create map of all messages
     messagesWithReplies.forEach(msg => {
       messageMap.set(msg.id, { ...msg, replies: [] });
     });
     
-    // Second pass: organize into parent-child relationships
     messagesWithReplies.forEach(msg => {
       if (msg.parent_id && messageMap.has(msg.parent_id)) {
-        // This is a reply - add to parent's replies
         const parent = messageMap.get(msg.parent_id);
         parent.replies.push(messageMap.get(msg.id));
       } else if (!msg.parent_id) {
-        // This is a root message
         rootMessages.push(messageMap.get(msg.id));
       }
     });
@@ -69,7 +66,7 @@ exports.getMessages = async (req, res) => {
     // Sort root messages by date (newest first)
     rootMessages.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     
-    // Sort replies within each parent by date (oldest first, so they appear below the parent)
+    // Sort replies within each parent by date (oldest first)
     rootMessages.forEach(root => {
       root.replies.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     });
@@ -96,7 +93,10 @@ exports.getMessages = async (req, res) => {
 // Send text message (with optional reply)
 exports.sendTextMessage = async (req, res) => {
   const { content, parent_id, reply_to_username } = req.body;
-  if (!content) return res.status(400).json({ error: 'Message content required' });
+  
+  if (!content) {
+    return res.status(400).json({ error: 'Message content required' });
+  }
   
   try {
     const result = await pool.query(
@@ -120,95 +120,10 @@ exports.sendTextMessage = async (req, res) => {
     
     res.status(201).json(newMsg);
   } catch (err) {
-    console.error(err);
+    console.error('Send message error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };
-
-// Upload file attachment (with optional reply)
-/*exports.uploadAttachment = async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  const file = req.file;
-  let messageType = 'file';
-  if (file.mimetype.startsWith('image/')) messageType = 'image';
-  else if (file.mimetype.startsWith('video/')) messageType = 'video';
-  const fileUrl = `/uploads/chat/${file.filename}`;
-  
-  const { parent_id, reply_to_username } = req.body;
-  
-  try {
-    const result = await pool.query(
-      `INSERT INTO chat_messages (user_id, message_type, content, file_url, file_size, mime_type, parent_id, reply_to_username)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [req.user.id, messageType, file.originalname, fileUrl, file.size, file.mimetype, parent_id || null, reply_to_username || null]
-    );
-    
-    // Get the user's info
-    const userResult = await pool.query(
-      'SELECT username, email, avatar_url FROM users WHERE id = $1',
-      [req.user.id]
-    );
-    
-    const newMsg = {
-      ...result.rows[0],
-      username: userResult.rows[0].username,
-      email: userResult.rows[0].email,
-      avatar_url: userResult.rows[0].avatar_url
-    };
-    
-    res.status(201).json(newMsg);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
-  }
-};*/
-
-// Upload file attachment to Supabase Storage
-/*exports.uploadAttachment = async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  
-  const file = req.file;
-  let messageType = 'file';
-  if (file.mimetype.startsWith('image/')) messageType = 'image';
-  else if (file.mimetype.startsWith('video/')) messageType = 'video';
-  
-  const { parent_id, reply_to_username } = req.body;
-  
-  try {
-    // Upload to Supabase Storage
-    const { publicUrl, filePath } = await uploadFile(
-      file,
-      'chat-files',
-      'messages',
-      req.user.id
-    );
-    
-    // Save message with Supabase URL
-    const result = await pool.query(
-      `INSERT INTO chat_messages (user_id, message_type, content, file_url, file_size, mime_type, parent_id, reply_to_username)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [req.user.id, messageType, file.originalname, publicUrl, file.size, file.mimetype, parent_id || null, reply_to_username || null]
-    );
-    
-    // Get user info
-    const userResult = await pool.query(
-      'SELECT username, email, avatar_url FROM users WHERE id = $1',
-      [req.user.id]
-    );
-    
-    const newMsg = {
-      ...result.rows[0],
-      username: userResult.rows[0].username,
-      email: userResult.rows[0].email,
-      avatar_url: userResult.rows[0].avatar_url
-    };
-    
-    res.status(201).json(newMsg);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error: ' + err.message });
-  }
-};*/
 
 // Upload file attachment to Supabase Storage
 exports.uploadAttachment = async (req, res) => {

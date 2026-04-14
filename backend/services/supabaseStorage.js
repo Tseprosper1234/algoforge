@@ -1,3 +1,4 @@
+// services/supabaseStorage.js
 const { createClient } = require('@supabase/supabase-js');
 
 // Check if Supabase is configured
