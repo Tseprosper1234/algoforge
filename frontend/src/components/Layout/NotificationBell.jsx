@@ -36,7 +36,7 @@ const NotificationBell = () => {
   const hasUnread = unreadCount > 0;
 
   return (
-    <div style={{ position: 'relative',  left: '-80px',}} ref={dropdownRef}>
+    <div style={{ position: 'relative',  left: '0',}} ref={dropdownRef}>
       <button className="header-icon" onClick={handleBellClick} style={{ position: 'relative' }}>
         🔔
         {hasUnread && <span className="notification-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}

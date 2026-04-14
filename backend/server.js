@@ -11,6 +11,7 @@ const app = express();
 // Allowed origins (add your frontend URLs here)
 const allowedOrigins = [
   'https://algoforge-ovfi.onrender.com',  // Your current frontend URL
+  'http://localhost:5173'
 ];
 
 // CORS options
