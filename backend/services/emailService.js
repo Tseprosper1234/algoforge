@@ -1,4 +1,4 @@
-// services/emailService.js
+/*// services/emailService.js
 const nodemailer = require('nodemailer');
 
 // Test SMTP connection on startup
@@ -93,3 +93,43 @@ module.exports = {
   sendVerificationEmail,
   sendEmail 
 };
+*/
+
+
+
+
+// services/emailService.js
+const { Resend } = require('resend');
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+
+async function sendVerificationEmail(to, code) {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: `AlgoForge <${FROM_EMAIL}>`,
+      to: [to],
+      subject: 'Verify Your Email - AlgoForge',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head><style>.code{font-size:32px;font-weight:bold;color:#3b82f6;letter-spacing:5px;margin:20px 0;}</style></head>
+        <body>
+          <h2>Welcome to AlgoForge! 🧠</h2>
+          <p>Your verification code is:</p>
+          <div class="code">${code}</div>
+          <p>This code expires in 15 minutes.</p>
+        </body>
+        </html>
+      `,
+    });
+    
+    console.log(`✅ Email sent to ${to}, id: ${data.id}`);
+    return { success: true };
+  } catch (error) {
+    console.error('Resend error:', error);
+    return { error: error.message };
+  }
+}
+
+module.exports = { sendVerificationEmail };
