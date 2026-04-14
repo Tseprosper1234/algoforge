@@ -7,8 +7,35 @@ const path = require('path');
 const app = express();
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+// Allowed origins
+// Allowed origins (add your frontend URLs here)
+const allowedOrigins = [
+  'https://algoforge-ovfi.onrender.com',  // Your current frontend URL
+];
+
+// CORS options
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log(`Blocked by CORS: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200
+};
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files for uploads
