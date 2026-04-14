@@ -161,7 +161,7 @@ exports.uploadAttachment = async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
-};*/
+};
 
 // Upload file attachment to Supabase Storage
 /*exports.uploadAttachment = async (req, res) => {
