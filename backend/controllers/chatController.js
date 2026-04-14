@@ -126,7 +126,7 @@ exports.sendTextMessage = async (req, res) => {
 };
 
 // Upload file attachment (with optional reply)
-/*exports.uploadAttachment = async (req, res) => {
+exports.uploadAttachment = async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
   const file = req.file;
   let messageType = 'file';
@@ -208,10 +208,10 @@ exports.sendTextMessage = async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Server error: ' + err.message });
   }
-};*/
+};
 
 // Upload file attachment to Supabase Storage
-exports.uploadAttachment = async (req, res) => {
+/*exports.uploadAttachment = async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
@@ -257,4 +257,4 @@ exports.uploadAttachment = async (req, res) => {
     console.error('Upload error:', err);
     res.status(500).json({ error: 'Failed to upload file: ' + err.message });
   }
-};
+};*/
