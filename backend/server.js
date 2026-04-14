@@ -8,8 +8,13 @@ const app = express();
 
 // Middleware
 // Allowed origins
+// Allowed origins (add your frontend URLs here)
 const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
   'https://algoforge.onrender.com',
+  'https://algoforge-ovfi.onrender.com',  // Your current frontend URL
+  'https://algoforge-api.onrender.com'
 ];
 
 // CORS options
@@ -20,17 +25,21 @@ const corsOptions = {
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      console.warn(`Blocked by CORS: ${origin}`);
+      console.log(`Blocked by CORS: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true,  // Allow cookies/auth headers
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   optionsSuccessStatus: 200
 };
 
 // Apply CORS middleware
 app.use(cors(corsOptions));
-app.use(express.json());
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files for uploads
