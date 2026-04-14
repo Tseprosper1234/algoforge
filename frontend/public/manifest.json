@@ -12,6 +12,7 @@
   "dir": "ltr",
   "categories": ["education", "productivity", "development"],
   "prefer_related_applications": false,
+  "id": "/",
   "icons": [
     {
       "src": "/icons/icon-72x72.png",
@@ -60,22 +61,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshots/browse-page.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Browse learning topics"
-    },
-    {
-      "src": "/screenshots/chat-forum.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Community discussion forum"
     }
   ],
   "shortcuts": [
