@@ -1,4 +1,4 @@
-// services/emailService.js - NODEMAILER ONLY (No Resend)
+/*// services/emailService.js - NODEMAILER ONLY (No Resend)
 const nodemailer = require('nodemailer');
 
 // Check if SMTP is configured
@@ -180,4 +180,123 @@ module.exports = {
   notifyNewContent, 
   sendVerificationEmail,
   sendEmail 
+};
+*/
+
+
+// services/emailService.js - Using Brevo (Sendinblue) with correct syntax
+const SibApiV3Sdk = require('sib-api-v3-sdk');
+
+// Initialize Brevo API client
+let defaultClient = SibApiV3Sdk.ApiClient.instance;
+let apiKey = defaultClient.authentications['api-key'];
+apiKey.apiKey = process.env.BREVO_API_KEY;
+
+let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+
+// Helper function to send emails
+async function sendEmail(to, subject, htmlContent) {
+    if (!process.env.BREVO_API_KEY) {
+        console.error('BREVO_API_KEY not configured. Email not sent.');
+        return { error: 'Email service not configured' };
+    }
+
+    let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+    sendSmtpEmail.subject = subject;
+    sendSmtpEmail.htmlContent = htmlContent;
+    sendSmtpEmail.sender = { 
+        name: "AlgoForge", 
+        email: "tseprosper02@gmail.com"
+    };
+    sendSmtpEmail.to = [{ email: to }];
+
+    try {
+        const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+        console.log(`✅ Email sent to ${to} with message ID: ${data.messageId}`);
+        return { success: true, messageId: data.messageId };
+    } catch (error) {
+        console.error('❌ Error sending email via Brevo:', error.response?.body || error.message);
+        return { error: error.message };
+    }
+}
+
+// Send verification code
+async function sendVerificationEmail(to, code) {
+    const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Verify Your Email</title>
+            <style>
+                body { font-family: Arial, sans-serif; text-align: center; }
+                .code { font-size: 32px; font-weight: bold; background: #f0f0f0; display: inline-block; padding: 10px 20px; border-radius: 8px; letter-spacing: 4px; margin: 20px 0; }
+            </style>
+        </head>
+        <body>
+            <h2 style="color: #3b82f6;">AlgoForge</h2>
+            <p>Your verification code is:</p>
+            <div class="code">${code}</div>
+            <p>This code expires in 15 minutes.</p>
+            <p>If you didn't create an account, please ignore this email.</p>
+        </body>
+        </html>
+    `;
+    return await sendEmail(to, 'Verify Your Email - AlgoForge', html);
+}
+
+// Send password reset link
+async function sendPasswordResetEmail(to, resetLink) {
+    const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Reset Your Password</title>
+            <style>
+                body { font-family: Arial, sans-serif; text-align: center; }
+                .button { display: inline-block; background: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+            </style>
+        </head>
+        <body>
+            <h2 style="color: #3b82f6;">AlgoForge</h2>
+            <p>Click the button below to reset your password. This link is valid for 1 hour.</p>
+            <a href="${resetLink}" class="button">Reset Password</a>
+            <p>If you didn't request this, please ignore this email.</p>
+        </body>
+        </html>
+    `;
+    return await sendEmail(to, 'Reset Your Password - AlgoForge', html);
+}
+
+// Notify about new content
+async function notifyNewContent(to, fileName, fileId) {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>New Content Available</title>
+            <style>
+                body { font-family: Arial, sans-serif; text-align: center; }
+                .button { display: inline-block; background: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+            </style>
+        </head>
+        <body>
+            <h2 style="color: #3b82f6;">AlgoForge</h2>
+            <p>New learning topic added:</p>
+            <h3>${fileName}</h3>
+            <a href="${frontendUrl}/files/${fileId}" class="button">View Now</a>
+        </body>
+        </html>
+    `;
+    return await sendEmail(to, 'New Content Available - AlgoForge', html);
+}
+
+module.exports = {
+    sendVerificationEmail,
+    sendPasswordResetEmail,
+    notifyNewContent,
+    sendEmail
 };
