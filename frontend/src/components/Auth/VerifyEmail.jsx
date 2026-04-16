@@ -34,7 +34,6 @@ const VerifyEmail = () => {
       localStorage.setItem('pendingVerificationEmail', urlEmail);
       setIsLoading(false);
     } else {
-      // Instead of redirecting immediately, show a form to enter email
       setIsLoading(false);
     }
   }, [location]);
@@ -94,7 +93,6 @@ const VerifyEmail = () => {
     }
   };
 
-  // If still loading, show loading spinner
   if (isLoading) {
     return (
       <div className="auth-container">
@@ -111,7 +109,6 @@ const VerifyEmail = () => {
         <h2>Verify Your Email</h2>
         
         {!email ? (
-          // Show email input if no email was passed
           <div>
             <p style={{ marginBottom: '16px', color: '#64748b', textAlign: 'center' }}>
               Please enter the email address you registered with
