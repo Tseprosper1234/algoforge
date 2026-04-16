@@ -73,13 +73,37 @@ const Login = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
+                        style={{
+                            width: '100%',
+                            padding: '12px',
+                            marginBottom: '16px',
+                            border: '1px solid var(--border)',
+                            borderRadius: '8px',
+                            fontSize: '1rem',
+                            background: 'var(--bg-card)',
+                            color: 'var(--text-primary)'
+                        }}
                     />
                     <PasswordInput
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Password"
                     />
-                    <button type="submit" disabled={loading}>
+                    <button 
+                        type="submit" 
+                        disabled={loading}
+                        style={{
+                            width: '100%',
+                            padding: '12px',
+                            background: '#3b82f6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '1rem',
+                            cursor: 'pointer',
+                            marginTop: '8px'
+                        }}
+                    >
                         {loading ? 'Logging in...' : 'Login'}
                     </button>
                 </form>
