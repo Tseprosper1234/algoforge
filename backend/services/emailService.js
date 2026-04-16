@@ -246,7 +246,7 @@ async function sendVerificationEmail(to, code) {
 }
 
 // Send password reset link
-async function sendPasswordResetEmail(to, resetLink) {
+async function sendPasswordResetCode(to, code) {
     const html = `
         <!DOCTYPE html>
         <html>
@@ -255,20 +255,20 @@ async function sendPasswordResetEmail(to, resetLink) {
             <title>Reset Your Password</title>
             <style>
                 body { font-family: Arial, sans-serif; text-align: center; }
-                .button { display: inline-block; background: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+                .code { font-size: 32px; font-weight: bold; background: #f0f0f0; display: inline-block; padding: 10px 20px; border-radius: 8px; letter-spacing: 4px; margin: 20px 0; }
             </style>
         </head>
         <body>
             <h2 style="color: #3b82f6;">AlgoForge</h2>
-            <p>Click the button below to reset your password. This link is valid for 1 hour.</p>
-            <a href="${resetLink}" class="button">Reset Password</a>
+            <p>You requested to reset your password. Your verification code is:</p>
+            <div class="code">${code}</div>
+            <p>This code expires in 15 minutes.</p>
             <p>If you didn't request this, please ignore this email.</p>
         </body>
         </html>
     `;
     return await sendEmail(to, 'Reset Your Password - AlgoForge', html);
 }
-
 // Notify about new content
 async function notifyNewContent(to, fileName, fileId) {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -296,7 +296,7 @@ async function notifyNewContent(to, fileName, fileId) {
 
 module.exports = {
     sendVerificationEmail,
-    sendPasswordResetEmail,
+    sendPasswordResetCode,
     notifyNewContent,
     sendEmail
 };
