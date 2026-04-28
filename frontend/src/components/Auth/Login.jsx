@@ -51,6 +51,14 @@ const Login = () => {
       await api.post('/auth/resend-verification', { email });
       setResendMessage('New verification code sent! Check your email.');
       setShowResend(false);
+
+setTimeout(() => {
+        navigate('/verify-email', { 
+          state: { email: email },
+          replace: true 
+        });
+      }, 2000);
+
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to resend verification code');
     } finally {
