@@ -23,40 +23,8 @@ import LoadingScreen from './components/Layout/LoadingScreen';
 import AdInitializer from './components/Ads/AdInitializer';
 import TopBannerAd from './components/Ads/TopBannerAd';
 import PopupAd from './components/Ads/PopupAd';
-
-// Inner component to use auth loading state
-const AppRoutes = () => {
-  const { loading } = useAuth();
-  
-  if (loading) {
-    return <LoadingScreen />;
-  }
-  
-  return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/verify-email" element={<VerifyEmail />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      
-      <Route element={<PrivateRoute />}>
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<Navigate to="/browse" />} />
-          <Route path="/browse" element={<BrowsePage />} />
-          <Route path="/files/:id" element={<FileDetailPage />} />
-          <Route path="/chat" element={<ChatForum />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/search" element={<SearchResults />} />
-        </Route>
-      </Route>
-      
-      <Route element={<AdminRoute />}>
-        <Route path="/admin/*" element={<AdminDashboard />} />
-      </Route>
-    </Routes>
-  );
-};
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsOfService from './components/TermsOfService';
 
 function App() {
   useEffect(() => {
@@ -73,11 +41,12 @@ function App() {
       });
     }
   }, []);
+
   return (
     <Router>
       <AuthProvider>
         <NotificationProvider>
-           {/* Initialize Google Ads */}
+          {/* Initialize Google Ads */}
           <AdInitializer />
           
           {/* Top Banner Ad - shows on all routes every 60 seconds */}
@@ -85,6 +54,7 @@ function App() {
           
           {/* Popup Ad - shows only on home route */}
           <PopupAd />
+          
           <ThemeProvider>
             <Routes>
               {/* Public routes - no authentication needed */}
@@ -93,6 +63,10 @@ function App() {
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              
+              {/* Legal Pages - Public Routes (ADD THESE) */}
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsOfService />} />
               
               {/* Protected routes - require authentication */}
               <Route element={<PrivateRoute />}>
