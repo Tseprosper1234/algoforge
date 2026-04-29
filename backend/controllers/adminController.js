@@ -573,3 +573,32 @@ exports.deleteQuizQuestion = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
+
+// Add this function to adminController.js
+
+// Delete user permanently from database
+exports.deleteUser = async (req, res) => {
+  const { id } = req.params;
+  
+  // Prevent admin from deleting themselves
+  if (parseInt(id) === req.user.id) {
+    return res.status(403).json({ error: 'You cannot delete your own account' });
+  }
+  
+  try {
+    // Check if user exists
+    const userCheck = await pool.query('SELECT id FROM users WHERE id = $1', [id]);
+    if (userCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Delete user (cascade will delete related records)
+    await pool.query('DELETE FROM users WHERE id = $1', [id]);
+    
+    res.json({ message: 'User deleted successfully' });
+  } catch (err) {
+    console.error('Delete user error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
