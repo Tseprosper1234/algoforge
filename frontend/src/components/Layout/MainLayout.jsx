@@ -16,7 +16,7 @@ const MainLayout = () => {
         <Outlet />
       </div>
 
-      {/* Footer with Legal Links - ADD THIS */}
+      {/* Footer with Legal Links for Authenticated Users */}
       <div style={{ 
         padding: '12px 20px', 
         textAlign: 'center', 
@@ -26,11 +26,14 @@ const MainLayout = () => {
         background: 'var(--bg-card)',
         flexShrink: 0
       }}>
+        <Link to="/about" style={{ color: 'var(--text-muted)', textDecoration: 'none', marginRight: '16px' }}>
+          About
+        </Link>
         <Link to="/privacy" style={{ color: 'var(--text-muted)', textDecoration: 'none', marginRight: '16px' }}>
-          Privacy Policy
+          Privacy
         </Link>
         <Link to="/terms" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
-          Terms of Service
+          Terms
         </Link>
         <span style={{ marginLeft: '16px' }}>© 2025 AlgoForge</span>
       </div>
