@@ -25,6 +25,7 @@ import TopBannerAd from './components/Ads/TopBannerAd';
 import PopupAd from './components/Ads/PopupAd';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
+import About from './components/About';
 
 function App() {
   useEffect(() => {
@@ -67,6 +68,7 @@ function App() {
               {/* Legal Pages - Public Routes (ADD THESE) */}
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
+<Route path="/about" element={<About />} />
               
               {/* Protected routes - require authentication */}
               <Route element={<PrivateRoute />}>
