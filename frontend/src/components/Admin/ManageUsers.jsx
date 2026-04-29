@@ -56,20 +56,30 @@ const ManageUsers = () => {
     }
   };
 
-  /*const getAvatarUrl = (avatarUrl, username) => {
-    if (avatarUrl) {
-      return `http://localhost:5000${avatarUrl}`;
+  // NEW: Delete user function
+  const deleteUser = async (userId, username) => {
+    if (!window.confirm(`⚠️ WARNING: This will permanently delete user "${username}" and ALL their data (messages, quiz attempts, etc.). This action CANNOT be undone!\n\nAre you ABSOLUTELY sure?`)) return;
+    
+    setActionLoading(`delete-${userId}`);
+    try {
+      await api.delete(`/admin/users/${userId}`);
+      alert(`User "${username}" has been permanently deleted.`);
+      await loadUsers();
+    } catch (error) {
+      console.error('Failed to delete user', error);
+      alert(error.response?.data?.error || 'Failed to delete user');
+    } finally {
+      setActionLoading(null);
     }
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(username || 'User')}&background=3b82f6&color=fff&size=48&bold=true`;
-  };*/
+  };
 
   const getAvatarUrl = (avatarUrl, username) => {
-  if (avatarUrl) {
-    if (avatarUrl.startsWith('http')) return avatarUrl;
-    return `${config.baseUrl}${avatarUrl}`;
-  }
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(username || 'User')}&background=3b82f6&color=fff&size=48&bold=true`;
-};
+    if (avatarUrl) {
+      if (avatarUrl.startsWith('http')) return avatarUrl;
+      return `${config.baseUrl}${avatarUrl}`;
+    }
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(username || 'User')}&background=3b82f6&color=fff&size=48&bold=true`;
+  };
 
   const filteredUsers = users.filter(user => 
     user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -167,8 +177,8 @@ const ManageUsers = () => {
               </div>
               
               {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '10px', width: '100%', justifyContent: 'flex-end' }}>
-                {/* Toggle Admin Button - Don't show for the current logged-in admin to prevent self-demotion? Optional */}
+              <div style={{ display: 'flex', gap: '10px', width: '100%', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                {/* Toggle Admin Button */}
                 <button
                   onClick={() => toggleAdmin(user.id, user.role)}
                   disabled={actionLoading === `admin-${user.id}`}
@@ -202,6 +212,24 @@ const ManageUsers = () => {
                   }}
                 >
                   {actionLoading === `ban-${user.id}` ? 'Updating...' : (user.is_banned ? 'Unban User' : 'Ban User')}
+                </button>
+                
+                {/* NEW: Delete User Button */}
+                <button
+                  onClick={() => deleteUser(user.id, user.username)}
+                  disabled={actionLoading === `delete-${user.id}`}
+                  style={{
+                    padding: '6px 16px',
+                    background: '#dc2626',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    opacity: actionLoading === `delete-${user.id}` ? 0.6 : 1
+                  }}
+                >
+                  {actionLoading === `delete-${user.id}` ? 'Deleting...' : '🗑️ Delete User'}
                 </button>
               </div>
             </div>
