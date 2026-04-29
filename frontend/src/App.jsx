@@ -1,4 +1,4 @@
-limport React from 'react';
+import React from 'react';
 import { useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -65,10 +65,10 @@ function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               
-              {/* Legal Pages - Public Routes (ADD THESE) */}
+              {/* Legal & About Pages - Public Routes (accessible without login) */}
+              <Route path="/about" element={<About />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
-<Route path="/about" element={<About />} />
               
               {/* Protected routes - require authentication */}
               <Route element={<PrivateRoute />}>
@@ -82,7 +82,7 @@ function App() {
                 </Route>
               </Route>
               
-              {/* Admin routes */}
+              {/* Admin routes - require admin role */}
               <Route element={<AdminRoute />}>
                 <Route path="/admin/*" element={<AdminDashboard />} />
               </Route>
