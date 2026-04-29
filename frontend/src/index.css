@@ -109,3 +109,47 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+/* Code block improvements for touch devices */
+.code-block {
+  background: #1e1e1e;
+  border-radius: 8px;
+  padding: 0;
+  overflow: hidden;
+  margin: 16px 0;
+  position: relative;
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 16px;
+  font-family: 'Courier New', 'SF Mono', 'Fira Code', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Improve touch scrolling on mobile */
+.code-block > div {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Responsive font sizes for code */
+@media (max-width: 768px) {
+  .code-block pre {
+    font-size: 12px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .code-block pre {
+    font-size: 10px;
+    padding: 10px;
+  }
+}
+
+/* Smooth pinch-zoom */
+.code-block {
+  touch-action: pan-x pan-y pinch-zoom;
+}
