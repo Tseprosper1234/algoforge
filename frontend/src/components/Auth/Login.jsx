@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api';
 
@@ -28,8 +28,9 @@ const Login = () => {
       const errorMessage = err.response?.data?.error || 'Login failed';
       setError(errorMessage);
       
-      // Check if error is about unverified email
-      if (errorMessage.includes('verify') || errorMessage.includes('verification')) {
+      if (errorMessage.toLowerCase().includes('verify') || 
+          errorMessage.toLowerCase().includes('verification') ||
+          errorMessage.includes('not verified')) {
         setShowResend(true);
       }
     } finally {
@@ -51,14 +52,14 @@ const Login = () => {
       await api.post('/auth/resend-verification', { email });
       setResendMessage('New verification code sent! Check your email.');
       setShowResend(false);
-
-setTimeout(() => {
+      
+      setTimeout(() => {
         navigate('/verify-email', { 
           state: { email: email },
           replace: true 
         });
       }, 2000);
-
+      
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to resend verification code');
     } finally {
@@ -118,6 +119,21 @@ setTimeout(() => {
         </div>
         <div className="link" onClick={() => navigate('/register')}>
           Don't have an account? Register
+        </div>
+        
+        {/* Footer Links - Visible before authentication */}
+        <div style={{ 
+          marginTop: '24px', 
+          paddingTop: '16px', 
+          borderTop: '1px solid #e2e8f0',
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '20px',
+          fontSize: '0.75rem'
+        }}>
+          <Link to="/about" style={{ color: '#64748b', textDecoration: 'none' }}>About</Link>
+          <Link to="/privacy" style={{ color: '#64748b', textDecoration: 'none' }}>Privacy</Link>
+          <Link to="/terms" style={{ color: '#64748b', textDecoration: 'none' }}>Terms</Link>
         </div>
       </div>
     </div>
