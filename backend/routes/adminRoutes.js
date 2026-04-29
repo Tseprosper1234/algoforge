@@ -12,6 +12,7 @@ router.get('/users', adminController.getUsers);
 router.put('/users/:id/ban', adminController.banUser);
 router.put('/users/:id/role', adminController.toggleAdminRole);
 router.put('/users/:id/role', adminController.toggleAdminRole);
+router.delete('/users/:id', adminController.deleteUser);
 
 // Categories
 router.get('/categories', adminController.getCategories);
