@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../../services/api';
 
 const Register = () => {
@@ -19,14 +19,9 @@ const Register = () => {
     
     try {
       const response = await api.post('/auth/register', { email, password, username });
-      console.log('Registration response:', response.data);
-      
-      // Store email in localStorage immediately
       localStorage.setItem('pendingVerificationEmail', email);
-      
       setSuccessMessage(response.data.message || 'Registration successful! Please verify your email.');
       
-      // Automatically redirect after 2 seconds
       setTimeout(() => {
         navigate('/verify-email', { 
           state: { email: email },
@@ -87,6 +82,21 @@ const Register = () => {
         
         <div className="link" onClick={() => navigate('/login')}>
           Already have an account? Login
+        </div>
+        
+        {/* Footer Links - Visible before authentication */}
+        <div style={{ 
+          marginTop: '24px', 
+          paddingTop: '16px', 
+          borderTop: '1px solid #e2e8f0',
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '20px',
+          fontSize: '0.75rem'
+        }}>
+          <Link to="/about" style={{ color: '#64748b', textDecoration: 'none' }}>About</Link>
+          <Link to="/privacy" style={{ color: '#64748b', textDecoration: 'none' }}>Privacy</Link>
+          <Link to="/terms" style={{ color: '#64748b', textDecoration: 'none' }}>Terms</Link>
         </div>
       </div>
     </div>
