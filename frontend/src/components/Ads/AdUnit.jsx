@@ -5,30 +5,16 @@ const AdUnit = ({ slot, format = 'auto', style = {} }) => {
   const adRef = useRef(null);
   const location = useLocation();
   
-  // Only show ads on content-rich pages, not on auth or empty pages
-  const shouldShowAd = () => {
-    const path = location.pathname;
-    
-    // Always hide on these pages
-    const hiddenPaths = ['/login', '/register', '/verify-email', '/forgot-password', '/reset-password'];
-    if (hiddenPaths.includes(path)) return false;
-    
-    // Hide on chat page (user-generated content)
-    if (path === '/chat') return false;
-    
-    // Show on content pages
-    const contentPaths = ['/browse', '/files/', '/search', '/profile'];
-    if (contentPaths.some(p => path.includes(p))) return true;
-    
-    return false;
-  };
+  // ✅ Only these pages are allowed to show ads
+  const adAllowedPaths = ['/browse', '/files/'];
+  const shouldShowAd = adAllowedPaths.some(path => location.pathname.startsWith(path));
   
   useEffect(() => {
     const isProduction = import.meta.env.PROD;
     const isAdSenseConfigured = import.meta.env.VITE_ADSENSE_CLIENT_ID && 
                                  import.meta.env.VITE_ADSENSE_CLIENT_ID !== 'ca-pub-xxxxxxxxxxxxxxxx';
     
-    if (isProduction && isAdSenseConfigured && shouldShowAd() && adRef.current && window.adsbygoogle) {
+    if (isProduction && isAdSenseConfigured && shouldShowAd && adRef.current && window.adsbygoogle) {
       try {
         (window.adsbygoogle = window.adsbygoogle || []).push({});
       } catch (error) {
@@ -37,9 +23,7 @@ const AdUnit = ({ slot, format = 'auto', style = {} }) => {
     }
   }, [location]);
 
-  if (!shouldShowAd() || !import.meta.env.PROD) {
-    return null;
-  }
+  if (!shouldShowAd || !import.meta.env.PROD) return null;
 
   return (
     <ins
