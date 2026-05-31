@@ -1,106 +1,89 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { shouldShowPopupAd, recordPopupAdShown } from '../../utils/adTracker';
 
 const PopupAd = () => {
-    const [showPopup, setShowPopup] = useState(false);
-    const [showCancel, setShowCancel] = useState(false);
-    const location = useLocation();
-
-    useEffect(() => {
-        let popupTimer;
-        let cancelTimer;
-
-        // Only show popup on the home route ('/')
-        if (location.pathname === '/browse' && shouldShowPopupAd()) {
-            popupTimer = setTimeout(() => {
-                setShowPopup(true);
-                recordPopupAdShown();
-
-                // Show cancel button after 5 more seconds (10 seconds total)
-                cancelTimer = setTimeout(() => {
-                    setShowCancel(true);
-                }, 5000);
-            }, 5000);
-        } else {
-            // Reset if not on home route
-            setShowPopup(false);
-            setShowCancel(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const popupRef = useRef(null);
+  const adLoadedRef = useRef(false);
+  const location = useLocation();
+  
+  // Only show on content pages
+  const adAllowedPaths = ['/browse', '/files/'];
+  const shouldShowAd = adAllowedPaths.some(path => location.pathname.startsWith(path));
+  
+  useEffect(() => {
+    // Reset state when location changes
+    setShowPopup(false);
+    adLoadedRef.current = false;
+    
+    if (!shouldShowAd || !import.meta.env.PROD) return;
+    
+    // Show popup after 10 seconds only once per session
+    const hasSeenPopup = sessionStorage.getItem('hasSeenAdPopup');
+    
+    if (!hasSeenPopup) {
+      const timer = setTimeout(() => {
+        setShowPopup(true);
+        sessionStorage.setItem('hasSeenAdPopup', 'true');
+      }, 10000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [location, shouldShowAd]);
+  
+  useEffect(() => {
+    if (showPopup && popupRef.current && !adLoadedRef.current && window.adsbygoogle) {
+      const hasAdContent = popupRef.current.querySelector('iframe') || 
+                          popupRef.current.getAttribute('data-adsbygoogle-status') === 'done';
+      
+      if (!hasAdContent) {
+        try {
+          adLoadedRef.current = true;
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+        } catch (error) {
+          console.warn('Popup ad push failed:', error);
         }
-
-        return () => {
-            clearTimeout(popupTimer);
-            clearTimeout(cancelTimer);
-        };
-    }, [location.pathname]);
-
-    const handleClose = () => {
-        setShowPopup(false);
-        setShowCancel(false);
-    };
-
-    if (!showPopup) return null;
-
-    return (
-        <div style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '50%',
-            minWidth: '300px',
-            maxWidth: '600px',
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-            zIndex: 10000,
-            padding: '20px',
-            textAlign: 'center'
-        }}>
-            {/* Close button - appears after 5 seconds of popup showing */}
-            {showCancel && (
-                <button
-                    onClick={handleClose}
-                    style={{
-                        position: 'absolute',
-                        top: '10px',
-                        right: '10px',
-                        background: '#ef4444',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '50%',
-                        width: '30px',
-                        height: '30px',
-                        cursor: 'pointer',
-                        fontSize: '16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}
-                >
-                    ✕
-                </button>
-            )}
-
-            <h3 style={{ marginBottom: '15px', color: '#1e293b' }}>Sponsored Content</h3>
-
-            {/* Google Ad Unit */}
-            <div style={{ minHeight: '250px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <ins
-                    className="adsbygoogle"
-                    style={{ display: 'block', width: '100%', height: '250px' }}
-                    data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-                    data-ad-slot="1234567890"
-                    data-ad-format="rectangle"
-                    data-full-width-responsive="true"
-                ></ins>
-            </div>
-
-            <p style={{ fontSize: '12px', color: '#64748b', marginTop: '15px' }}>
-                {!showCancel ? 'Ad will close in 5 seconds...' : 'Click ✕ to close ad'}
-            </p>
-        </div>
-    );
+      }
+    }
+  }, [showPopup]);
+  
+  if (!showPopup || !shouldShowAd) return null;
+  
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: '20px',
+      right: '20px',
+      width: '300px',
+      background: 'white',
+      border: '1px solid #ccc',
+      borderRadius: '8px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      zIndex: 1000,
+      padding: '10px'
+    }}>
+      <button
+        onClick={() => setShowPopup(false)}
+        style={{
+          float: 'right',
+          background: 'none',
+          border: 'none',
+          fontSize: '18px',
+          cursor: 'pointer'
+        }}
+      >
+        ×
+      </button>
+      <ins
+        ref={popupRef}
+        className="adsbygoogle"
+        style={{ display: 'block' }}
+        data-ad-client={import.meta.env.VITE_ADSENSE_CLIENT_ID}
+        data-ad-slot="YOUR_POPUP_SLOT_ID"
+        data-ad-format="rectangle"
+      />
+    </div>
+  );
 };
 
 export default PopupAd;
