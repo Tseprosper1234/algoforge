@@ -1,56 +1,74 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const TopBannerAd = () => {
-  const [showBanner, setShowBanner] = useState(false);
-
+  const adRef = useRef(null);
+  const location = useLocation();
+  const adLoadedRef = useRef(false);
+  const intervalRef = useRef(null);
+  
+  // Only show on content pages
+  const adAllowedPaths = ['/browse', '/files/'];
+  const shouldShowAd = adAllowedPaths.some(path => location.pathname.startsWith(path));
+  
   useEffect(() => {
-    let interval;
-    let timeout;
-
-    const showBannerWithTimeout = () => {
-      setShowBanner(true);
-      // Hide after 5 seconds
-      timeout = setTimeout(() => {
-        setShowBanner(false);
-      }, 5000);
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    
+    // Reset loaded flag when location changes
+    adLoadedRef.current = false;
+    
+    const isProduction = import.meta.env.PROD;
+    const isAdSenseConfigured = import.meta.env.VITE_ADSENSE_CLIENT_ID && 
+                                 import.meta.env.VITE_ADSENSE_CLIENT_ID !== 'ca-pub-xxxxxxxxxxxxxxxx';
+    
+    if (!isProduction || !isAdSenseConfigured || !shouldShowAd || !adRef.current) {
+      return;
+    }
+    
+    // Function to load ad
+    const loadAd = () => {
+      if (adRef.current && !adLoadedRef.current && window.adsbygoogle) {
+        const hasAdContent = adRef.current.querySelector('iframe') || 
+                            adRef.current.getAttribute('data-adsbygoogle-status') === 'done';
+        
+        if (!hasAdContent) {
+          try {
+            adLoadedRef.current = true;
+            (window.adsbygoogle = window.adsbygoogle || []).push({});
+          } catch (error) {
+            console.warn('Top banner ad push failed:', error);
+          }
+        }
+      }
     };
-
-    // Start showing banner every 60 seconds
-    interval = setInterval(showBannerWithTimeout, 60000);
-
+    
+    // Load ad after a short delay
+    const timeoutId = setTimeout(loadAd, 100);
+    
     return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
+      clearTimeout(timeoutId);
     };
-  }, []);
-
-  if (!showBanner) return null;
-
+  }, [location]);
+  
+  if (!shouldShowAd || !import.meta.env.PROD) {
+    return null;
+  }
+  
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      height: '1cm',
-      backgroundColor: '#f8fafc',
-      borderBottom: '1px solid #e2e8f0',
-      zIndex: 9999,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      overflow: 'hidden',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-    }}>
-      {/* Google Ad Unit - Horizontal Banner */}
+    <div style={{ textAlign: 'center', margin: '10px 0', minHeight: '90px' }}>
       <ins
+        ref={adRef}
         className="adsbygoogle"
-        style={{ display: 'block', width: '100%', height: '100%' }}
-        data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-        data-ad-slot="0987654321"
-        data-ad-format="horizontal"
+        style={{ display: 'block' }}
+        data-ad-client={import.meta.env.VITE_ADSENSE_CLIENT_ID}
+        data-ad-slot="YOUR_TOP_BANNER_SLOT_ID"
+        data-ad-format="auto"
         data-full-width-responsive="true"
-      ></ins>
+      />
     </div>
   );
 };
