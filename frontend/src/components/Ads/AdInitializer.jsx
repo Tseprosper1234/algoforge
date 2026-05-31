@@ -1,39 +1,33 @@
 import React, { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 
 const AdInitializer = () => {
-  const location = useLocation();
-
   useEffect(() => {
-    // Load Google Ads script
-    const loadAdsScript = () => {
-      if (!document.querySelector('script[src*="pagead2.googlesyndication.com"]')) {
-        const script = document.createElement('script');
-        script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
-        script.async = true;
-        script.crossOrigin = 'anonymous';
-        script.setAttribute('data-ad-client', 'ca-pub-XXXXXXXXXXXXXXXX');
-        document.head.appendChild(script);
-      }
-    };
-
-    loadAdsScript();
-
-    // Push ads when they're loaded
-    const pushAds = () => {
-      if (window.adsbygoogle) {
+    const isProduction = import.meta.env.PROD;
+    const isAdSenseConfigured = import.meta.env.VITE_ADSENSE_CLIENT_ID && 
+                                 import.meta.env.VITE_ADSENSE_CLIENT_ID !== 'ca-pub-xxxxxxxxxxxxxxxx';
+    
+    if (isProduction && isAdSenseConfigured) {
+      // Only initialize AdSense if not already initialized
+      if (!window.adsbygoogleLoaded) {
+        window.adsbygoogleLoaded = true;
+        
         try {
-          (window.adsbygoogle = window.adsbygoogle || []).push({});
-        } catch (e) {
-          console.error('Ad error:', e);
+          // Load AdSense script
+          const script = document.createElement('script');
+          script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${import.meta.env.VITE_ADSENSE_CLIENT_ID}`;
+          script.async = true;
+          script.crossOrigin = 'anonymous';
+          script.onerror = () => console.warn('AdSense script failed to load');
+          document.head.appendChild(script);
+          
+          // Initialize ads array
+          window.adsbygoogle = window.adsbygoogle || [];
+        } catch (error) {
+          console.warn('AdSense initialization failed:', error);
         }
       }
-    };
-
-    // Small delay to ensure DOM is ready
-    const timer = setTimeout(pushAds, 100);
-    return () => clearTimeout(timer);
-  }, [location.pathname]);
+    }
+  }, []);
 
   return null;
 };
