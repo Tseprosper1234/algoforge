@@ -1,4 +1,4 @@
-const { Pool } = require('pg');
+/*const { Pool } = require('pg');
 
 const pool = new Pool({
   host: process.env.DB_HOST,
@@ -25,7 +25,7 @@ pool.connect((err, client, release) => {
 });
 
 module.exports = pool;
-
+*/
 
 // db/pool.js
 /*const { Pool } = require('pg');
@@ -39,3 +39,33 @@ const pool = new Pool({
 });
 
 module.exports = pool;*/
+
+
+// db/pool.js
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT || 5432,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME || 'postgres',
+  ssl: {
+    rejectUnauthorized: false, // Required for Supabase
+  },
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 20000,
+});
+
+// Test connection
+pool.connect((err, client, release) => {
+  if (err) {
+    console.error('Error connecting to Supabase:', err.message);
+  } else {
+    console.log('Connected to Supabase successfully');
+    release();
+  }
+});
+
+module.exports = pool;
