@@ -1,51 +1,62 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const PopupAd = () => {
   const [showPopup, setShowPopup] = useState(false);
+  const [showCloseButton, setShowCloseButton] = useState(false);
   const popupRef = useRef(null);
   const adLoadedRef = useRef(false);
   const location = useLocation();
+  const { user } = useAuth();
   
-  // Only show on content pages
+  // Only show on content pages AFTER login
   const adAllowedPaths = ['/browse', '/files/'];
-  const shouldShowAd = adAllowedPaths.some(path => location.pathname.startsWith(path));
+  const shouldShowAd = adAllowedPaths.some(path => location.pathname.startsWith(path)) && user;
   
   useEffect(() => {
-    // Reset state when location changes
+    // Reset states when location changes
     setShowPopup(false);
+    setShowCloseButton(false);
     adLoadedRef.current = false;
     
     if (!shouldShowAd || !import.meta.env.PROD) return;
     
-    // Show popup after 10 seconds only once per session
+    // Check if user has seen popup in this session
     const hasSeenPopup = sessionStorage.getItem('hasSeenAdPopup');
     
     if (!hasSeenPopup) {
-      const timer = setTimeout(() => {
+      // Show popup after 5 seconds (not immediate)
+      const showTimer = setTimeout(() => {
         setShowPopup(true);
         sessionStorage.setItem('hasSeenAdPopup', 'true');
-      }, 10000);
+        
+        // Show close button after 5 seconds (AdSense requires close button to be visible)
+        const closeButtonTimer = setTimeout(() => {
+          setShowCloseButton(true);
+        }, 5000);
+        
+        return () => clearTimeout(closeButtonTimer);
+      }, 5000);
       
-      return () => clearTimeout(timer);
+      return () => clearTimeout(showTimer);
     }
-  }, [location, shouldShowAd]);
+  }, [location, shouldShowAd, user]);
   
   useEffect(() => {
     if (showPopup && popupRef.current && !adLoadedRef.current && window.adsbygoogle) {
-      const hasAdContent = popupRef.current.querySelector('iframe') || 
-                          popupRef.current.getAttribute('data-adsbygoogle-status') === 'done';
-      
-      if (!hasAdContent) {
-        try {
-          adLoadedRef.current = true;
-          (window.adsbygoogle = window.adsbygoogle || []).push({});
-        } catch (error) {
-          console.warn('Popup ad push failed:', error);
-        }
+      try {
+        adLoadedRef.current = true;
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      } catch (error) {
+        console.warn('Popup ad push failed:', error);
       }
     }
   }, [showPopup]);
+  
+  const handleClose = () => {
+    setShowPopup(false);
+  };
   
   if (!showPopup || !shouldShowAd) return null;
   
@@ -55,25 +66,42 @@ const PopupAd = () => {
       bottom: '20px',
       right: '20px',
       width: '300px',
-      background: 'white',
-      border: '1px solid #ccc',
-      borderRadius: '8px',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      maxWidth: '90%',
+      backgroundColor: 'var(--bg-card)',
+      border: '1px solid var(--border)',
+      borderRadius: '12px',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
       zIndex: 1000,
-      padding: '10px'
+      padding: '12px',
+      animation: 'slideIn 0.3s ease-out'
     }}>
-      <button
-        onClick={() => setShowPopup(false)}
-        style={{
-          float: 'right',
-          background: 'none',
-          border: 'none',
-          fontSize: '18px',
-          cursor: 'pointer'
-        }}
-      >
-        ×
-      </button>
+      {showCloseButton && (
+        <button
+          onClick={handleClose}
+          style={{
+            position: 'absolute',
+            top: '-10px',
+            right: '-10px',
+            background: '#ef4444',
+            border: 'none',
+            color: 'white',
+            width: '28px',
+            height: '28px',
+            borderRadius: '50%',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            zIndex: 11,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+          }}
+          aria-label="Close ad"
+        >
+          ✕
+        </button>
+      )}
       <ins
         ref={popupRef}
         className="adsbygoogle"
@@ -81,7 +109,20 @@ const PopupAd = () => {
         data-ad-client={import.meta.env.VITE_ADSENSE_CLIENT_ID}
         data-ad-slot="YOUR_POPUP_SLOT_ID"
         data-ad-format="rectangle"
+        data-full-width-responsive="true"
       />
+      <style>{`
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 };
